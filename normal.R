@@ -3,23 +3,23 @@ library(energy)
 
 EYY <- function(){(2) / sqrt(pi)}
 
-ExY <- function(dat){
+ExY <- function(dat, mu){
     n <- length(dat)
     store <- rep(0,n)
     for(i in 1:n){
-       store[i] <- 2*(dat[i]) * pnorm(dat[i], mean=0, sd=1) + 2 * dnorm(dat[i], mean=0, sd=1)   
+       store[i] <- 2*(dat[i]) * pnorm(dat[i], mean=0, sd=1) + 2 * dnorm(dat[i], mean=0, sd=1) - (dat[i] - mu)
     }
     return(store)
 }
 
-norm.kernel <- function(dat, mu=NULL, sigma=NULL){
+norm.kernel <- function(dat, mu=0, sigma=1){
     n <- length(dat)
     if(is.null(mu) == TRUE)
         mu <- mean(dat)
     if(is.null(sigma) == TRUE)
-        sigma <- sd(dat)
+        sigma <- (1/n) * sum((dat - mu)^2)
     dat <- (dat - mu)/sigma
-    lilDist <- ExY(dat)
+    lilDist <- ExY(dat, mu)
     bigDist <- EYY()
     kmat <- matrix(0,n,n)
     for(i in 1:n){
@@ -40,18 +40,16 @@ empirical.probs <- rep(0,M)
 
 for (i in 1:M){
     dat <- rnorm(100)
-    xx <- norm.kernel(dat) 
+    xx <- norm.kernel(dat, mu=0, sigma=1) 
     save.estat[i] <- xx$estat
-    eig.probs[i] <- 1 - imhof(xx$estat, lambda = xx$eigs[1:70])$Qq
+    eig.probs[i] <- 1 - imhof(xx$estat, lambda = xx$eigs[1:length(dat)-1])$Qq
 }
 
 for (i in 1:M){
     empirical.probs[i] <- sum(save.estat <= save.estat[i])/M
 }
 
-png("normal_known.png")
 plot(empirical.probs, eig.probs, xlim = c(0,1), ylim = c(0,1));abline(coef=c(0,1))
-dev.off()
 
 evnew <- c(0.11311, 0.08357, 0.03911, 0.03182, 0.01990, 
            0.01698, 0.01207, 0.01060, 0.00810,

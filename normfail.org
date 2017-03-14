@@ -5,6 +5,8 @@
 #+PROPERTY: header-args:R :session *R* :cache yes :results output :exports both :tangle yes 
 #+PANDOC_OPTIONS: self-contained:t 
 
+Find the R code at:
+https://github.com/jth005/NormalEigen
 Testing the composite hypothesis data \sim Normal. Previous pp-Plots
 were incorrect because the data were centered and scaled, and then the
 simple hypothesis H_0: data $\sim N(0,1)$ was tested.

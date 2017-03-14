@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Normal Eigenvalue Probabilities</title>
-<!-- 2017-03-14 Tue 10:33 -->
+<!-- 2017-03-14 Tue 14:26 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="John Haman" />
@@ -134,16 +134,183 @@ for the JavaScript code in this tag.
  }
 /*]]>*///-->
 </script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
 </head>
 <body>
 <div id="content">
 <h1 class="title">Normal Eigenvalue Probabilities</h1>
 <p>
-p</p>
+Find the R code at:
+<a href="https://github.com/jth005/NormalEigen">https://github.com/jth005/NormalEigen</a>
+Testing the composite hypothesis data &sim; Normal. Previous pp-Plots
+were incorrect because the data were centered and scaled, and then the
+simple hypothesis H<sub>0</sub>: data \(\sim N(0,1)\) was tested.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-R">library(CompQuadForm)
+library(energy)
+
+EYY &lt;- function(){(2) / sqrt(pi)}
+
+ExY &lt;- function(dat){
+    n &lt;- length(dat)
+    store &lt;- rep(0,n)
+    for(i in 1:n){
+       store[i] &lt;- 2*(dat[i]) * pnorm(dat[i], mean=0, sd=1) + 2 * dnorm(dat[i], mean=0, sd=1)   
+    }
+    return(store)
+}
+</pre>
+</div>
+
+<p>
+Define the function that computes the Kernel matrix and returns the
+Eigenvalues of that matrix. The kernel matrix is symmetric. First we
+need to center and scale the data.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-R">norm.kernel &lt;- function(dat, mu=NULL, sigma=NULL){
+    n &lt;- length(dat)
+    if(is.null(mu) == TRUE)
+	mu &lt;- mean(dat)
+    if(is.null(sigma) == TRUE)
+	sigma &lt;- sd(dat)
+    dat &lt;- (dat - mu)/sigma
+    lilDist &lt;- ExY(dat)
+    bigDist &lt;- EYY()
+    kmat &lt;- matrix(0,n,n)
+    for(i in 1:n){
+	for(j in i:n){
+	    kmat[i,j] &lt;- (1/n) * (lilDist[i] + lilDist[j] - bigDist - abs(dat[i] - dat[j])) 
+	    kmat[j,i] &lt;- kmat[i,j]
+	}
+    }
+    estat &lt;- normal.e(dat)
+    eigs &lt;- eigen(kmat, only.values=TRUE, symmetric=TRUE)$values
+    return(list(estat = estat, eigs = eigs))
+}
+</pre>
+</div>
+
+<p>
+Produce a PP-plot to compare the empirical distribution of the energy
+statistics in the composite Normal test versus the distribution
+determined by the Eigenvalue method.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-R">M &lt;- 300
+save.estat &lt;- rep(0,M)
+eig.probs &lt;- rep(0,M)
+empirical.probs &lt;- rep(0,M)
+
+for (i in 1:M){
+    dat &lt;- rnorm(100)
+    xx &lt;- norm.kernel(dat) 
+    save.estat[i] &lt;- xx$estat
+    eig.probs[i] &lt;- 1 - imhof(xx$estat, lambda = xx$eigs[1:70])$Qq
+}
+
+for (i in 1:M){
+    empirical.probs[i] &lt;- sum(save.estat &lt;= save.estat[i])/M
+}
+
+plot(empirical.probs, eig.probs, xlim = c(0,1), ylim = c(0,1));abline(coef=c(0,1))
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="EVpp.png" alt="EVpp.png" />
+</p>
+</div>
+
+<p>
+Similar plots are obtained when parameters of the Normal distribution are changed.
+</p>
+
+<p>
+Compute the Eigenvalues of the kernel matrix. Clearly the EVs are too
+big, the largest EV alone is bigger than E|Y-Y'|.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-R">dat &lt;- rnorm(100)
+my.eigs&lt;- norm.kernel(dat)$eigs[1:30]
+head(my.eigs)
+</pre>
+</div>
+
+<pre class="example">
+[1] 1.34002345 0.18173950 0.11284838 0.05103024 0.03480765 0.02251303
+</pre>
+
+<p>
+Smoothness of the eigenvalues:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-R">plot(log(my.eigs))
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="smooth.png" alt="smooth.png" />
+</p>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: John Haman</p>
-<p class="date">Created: 2017-03-14 Tue 10:33</p>
+<p class="date">Created: 2017-03-14 Tue 14:26</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.1.1 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
