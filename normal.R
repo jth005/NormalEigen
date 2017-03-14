@@ -19,6 +19,7 @@ norm.kernel <- function(dat, mu=0, sigma=1){
     if(is.null(sigma) == TRUE)
         sigma <- (1/n) * sum((dat - mu)^2)
     dat <- (dat - mu)/sigma
+    mu <- 0
     lilDist <- ExY(dat, mu)
     bigDist <- EYY()
     kmat <- matrix(0,n,n)
@@ -28,7 +29,7 @@ norm.kernel <- function(dat, mu=0, sigma=1){
             kmat[j,i] <- kmat[i,j]
         }
     }
-    estat <- normal.e(dat)
+    estat <- n*(2*mean(ExY(dat,mu)) - EYY() - 2/n^2 * sum(2*seq(n) - 1 - n)*sort(dat))
     eigs <- eigen(kmat, only.values=TRUE, symmetric=TRUE)$values
     return(list(estat = estat, eigs = eigs))
 }
@@ -62,6 +63,7 @@ evnew <- c(0.11311, 0.08357, 0.03911, 0.03182, 0.01990,
            0.0011303, 0.0010386, 0.00099285)
 
 dat <- rnorm(100)
+dat <- (dat - mean(dat))/sd(dat)
 my.eigs<- norm.kernel(dat)$eigs[1:30]
 plot(my.eigs, evnew)
 
