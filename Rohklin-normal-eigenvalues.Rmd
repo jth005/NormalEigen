@@ -1,0 +1,134 @@
+---
+title: "Eigenvalue estimates for energy test of normality"
+author: "Maria Rizzo"
+date: "February 17, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(CompQuadForm)
+library(energy)
+```
+
+Discrete approximation of eigenvalues
+---
+
+Here I am revisiting (from 2012) the problem of discrete approximation
+of eigenvalues of the integral operator for the energy test
+of normality in one dimension.
+
+### Outline
+
+* Discrete approximation of eigenvalues of the
+integral operator in energy test of normality
+
+* Once we have the eigenvalues we can use Imhof's method 
+to compute cdf by imhof(q, lambda) in CompQuadForm package
+for R.
+
+Rohklin's eigenvalues for standard normal case (known parameters):
+
+```{r}
+a <- c(     .594547822648901E+00,            .184501229107294E+00,
+            .896716149920962E-01,            .530045256006873E-01,
+            .350153009124696E-01,            .248587981324693E-01,
+            .185633548500591E-01,            .143915911741875E-01,
+            .114846401385112E-01,            .937800982822500E-02,
+            .780253688285502E-02,            .659345609192650E-02,
+            .564530265962832E-02,            .488801777453065E-02,
+            .427358084872566E-02,            .376818192621398E-02,
+            .334745668591257E-02,            .299348700339364E-02,
+            .269285696480357E-02,            .243536016725779E-02,
+            .221312030931701E-02,            .201998064750430E-02,
+            .185107229913066E-02,            .170250391868742E-02,
+            .157113525146111E-02,            .145440961605249E-02,
+            .135022841684153E-02,            .125685605091806E-02,
+            .117284707676691E-02,            .109698988099141E-02,
+            .102826270561344E-02,            .965799030382689E-03,
+            .908860102494182E-03,            .856812975420318E-03,
+            .809112829277649E-03,            .765288644554764E-03,
+            .724931521431957E-03,            .687685100667119E-03,
+            .653237664729195E-03,            .621315590564069E-03,
+            .591677895959051E-03,            .564111675599440E-03)
+```
+
+Rohklin's eigenvalues for centered normal with estimated mean, and specified variance $=1$.
+
+```{r}
+a2 <- c(    
+  .18450E+00,   .11311E+00,   .53005E-01,   .39113E-01,   .24859E-01,   
+  .19901E-01,
+  .14392E-01,   .12069E-01,   .93780E-02,   .81049E-02,   .65935E-02,   
+  .58203E-02,
+  .48880E-02,   .43833E-02,   .37682E-02,   .34204E-02,   .29935E-02,   
+  .27437E-02,
+  .24354E-02,   .22498E-02,   .20200E-02,   .18784E-02,   .17025E-02,   
+  .15920E-02,
+  .14544E-02,   .13665E-02,   .12569E-02,   .11857E-02,   .10970E-02,   
+  .10386E-02)
+``` 
+
+
+Rohklin computed (30 largest) for the case of estimated parameters. Assuming that the data were centered and scaled using sample 
+estimates. There were two typos originally; these are the corrected ones:
+
+```{r}
+evnew <- c(0.11311, 0.08357, 0.03911, 0.03182, 0.01990, 
+           0.01698, 0.01207, 0.01060, 0.00810,
+           0.0072590,  0.0058203, 0.0052881, 
+           0.0043833, 0.0040262, 0.0034204, 
+           0.0031689, 0.0027437, 0.0025597, 
+           0.0022498, 0.0021112, 0.0018784, 
+           0.0017712, 0.0015920, 0.0015074, 
+           0.0013665, 0.0012985, 0.0011857, 
+           0.0011303, 0.0010386, 0.00099285)
+```
+
+### Mean and variance
+
+In the standard normal case (known parameters) the eigenvalues should sum to 
+$$
+E|Z-Z'|=
+2 \times \Gamma((d+1)/2) / \Gamma(d/2).
+$$
+For $d=1$ that is $E|Z-Z'| = 2/\sqrt{\pi}$ = `r 2/sqrt(pi)`.
+
+In general, for $d=1$, if $X \sim N(\mu, \sigma^2)$,
+$$
+ E|X-X'| = \frac{2\sigma}{\sqrt{\pi}}.
+$$
+
+```{r}
+sum(a)  #should be 2/sqrt(pi)
+2/sqrt(pi)
+```
+
+The normal.e() function in energy estimates both parameters.
+energy package does not have a function that estimates just
+one parameter. It does not have a function that uses the
+fully specified parameters, either. 
+
+In the case both parameters are estimated, the eigenvalues should
+sum to the expected value of $n \hat Q_n$. Checking by simulation
+that the mean of $n \hat Q_n$ matches the eigenvalues.
+
+```{r}
+m <- 1000
+n <- 1000
+length(a2)
+sum(a2)
+out <- replicate(m, expr={
+  x <- rnorm(n)
+  normal.e(x)
+})
+mean(out)
+var(out)
+
+length(evnew)
+sum(evnew)
+sum(evnew^2) * 2
+```

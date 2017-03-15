@@ -1,13 +1,13 @@
 library(CompQuadForm)
 library(energy)
 
-EYY <- function(){(2) / sqrt(pi)}
+EYY <- function(){(2)/sqrt(pi)}
 
 ExY <- function(dat, mu){
     n <- length(dat)
     store <- rep(0,n)
     for(i in 1:n){
-       store[i] <- 2*(dat[i]) * pnorm(dat[i], mean=0, sd=1) + 2 * dnorm(dat[i], mean=0, sd=1) - (dat[i] - mu)
+       store[i] <- 2*(dat[i]) * pnorm(dat[i], mean=mu, sd=1) + 2 * dnorm(dat[i], mean=mu, sd=1) - (dat[i] - mu)
     }
     return(store)
 }
@@ -17,9 +17,8 @@ norm.kernel <- function(dat, mu=0, sigma=1){
     if(is.null(mu) == TRUE)
         mu <- mean(dat)
     if(is.null(sigma) == TRUE)
-        sigma <- (1/n) * sum((dat - mu)^2)
-    dat <- (dat - mu)/sigma
-    mu <- 0
+        sigma2 <- (1/n) * sum((dat - mu)^2)
+        sigma <- sqrt(sigma2)
     lilDist <- ExY(dat, mu)
     bigDist <- EYY()
     kmat <- matrix(0,n,n)
@@ -29,7 +28,7 @@ norm.kernel <- function(dat, mu=0, sigma=1){
             kmat[j,i] <- kmat[i,j]
         }
     }
-    estat <- n*(2*mean(ExY(dat,mu)) - EYY() - 2/n^2 * sum(2*seq(n) - 1 - n)*sort(dat))
+    estat <- n*(2*mean(ExY(dat,mu)) - EYY() - 2/n^2 * sum((2*seq(n) - 1 - n)*sort(dat)))
     eigs <- eigen(kmat, only.values=TRUE, symmetric=TRUE)$values
     return(list(estat = estat, eigs = eigs))
 }
@@ -40,8 +39,8 @@ eig.probs <- rep(0,M)
 empirical.probs <- rep(0,M)
 
 for (i in 1:M){
-    dat <- rnorm(100)
-    xx <- norm.kernel(dat, mu=0, sigma=1) 
+    dat <- rnorm(100, mean =1)
+    xx <- norm.kernel(dat, mu=1, sigma=1) 
     save.estat[i] <- xx$estat
     eig.probs[i] <- 1 - imhof(xx$estat, lambda = xx$eigs[1:length(dat)-1])$Qq
 }
