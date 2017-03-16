@@ -12,15 +12,15 @@ ExY <- function(dat, mu){
     return(store)
 }
 
-norm.kernel <- function(dat, mu=0, sigma=1){
+norm.kernel <- function(dat, mu=NULL, sigma=NULL){
     n <- length(dat)
     if(is.null(mu) == TRUE)
         mu <- mean(dat)
     if(is.null(sigma) == TRUE){
-        sigma2.mle <- (1/n) * sum((dat - mu)^2)
-        sigma <- sqrt(sigma2.mle)}
+        sigma <- sd(dat)}
     dat <- (dat - mu)/sigma
     mu <- 0
+    sigma <- 1
     lilDist <- ExY(dat, mu)
     bigDist <- EYY()
     kmat <- matrix(0,n,n)
@@ -41,8 +41,8 @@ eig.probs <- rep(0,M)
 empirical.probs <- rep(0,M)
 
 for (i in 1:M){
-    dat <- rnorm(100, mean =1)
-    xx <- norm.kernel(dat, mu=1, sigma=1) 
+    dat <- rnorm(100, mean=0, sd=1)
+    xx <- norm.kernel(dat, mu=NULL, sigma=NULL) 
     save.estat[i] <- xx$estat
     eig.probs[i] <- 1 - imhof(xx$estat, lambda = xx$eigs[1:length(dat)-1])$Qq
 }
@@ -64,8 +64,9 @@ evnew <- c(0.11311, 0.08357, 0.03911, 0.03182, 0.01990,
            0.0011303, 0.0010386, 0.00099285)
 
 dat <- rnorm(100, mean=1)
-my.eigs<- norm.kernel(dat, mu=1)$eigs[1:30]
+my.eigs<- norm.kernel(dat, mu=NULL, sigma=NULL)$eigs[1:30]
 plot(my.eigs, evnew)
+head(my.eigs)
 
 
 m <- M
